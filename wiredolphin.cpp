@@ -50,6 +50,12 @@ wiredolphin::wiredolphin(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    ui->treewdgt_output->setColumnCount(6);
+    ui->treewdgt_output->setHeaderLabels(QStringList() << "Time" << "Length" << "Source IP" << "Source Port" <<
+                                         "Destination IP" << "Destination Port");
+
+
+
     timer = new QTimer(this);
 
 
@@ -147,12 +153,18 @@ void packet_handler(u_char *param, const struct pcap_pkthdr *header, const u_cha
     sport = ntohs( uh->sport );
     dport = ntohs( uh->dport );
 
+    QTreeWidgetItem *entry = new QTreeWidgetItem(current->ui->treewdgt_output);
+
+    /*
     QString output = QString(timestr);
     output.append(" ");
     output.append(QString::number(header->ts.tv_usec));
     output.append(" ");
-    output.append(QString::number(header->len));
+    output.append(QString::number(header->len));*/
 
+    entry->setText(0, QString(timestr));
+    entry->setText(1, QString::number(header->len));
+/*
     output.append(" ");
     output.append(QString::number(ih->saddr.byte1));
     output.append(".");
@@ -162,8 +174,22 @@ void packet_handler(u_char *param, const struct pcap_pkthdr *header, const u_cha
     output.append(".");
     output.append(QString::number(ih->saddr.byte4));
     output.append(" ");
-    output.append(QString::number(sport));
+    output.append(QString::number(sport));*/
 
+    QString sourceip;
+    sourceip.append(QString::number(ih->saddr.byte1));
+    sourceip.append(".");
+    sourceip.append(QString::number(ih->saddr.byte2));
+    sourceip.append(".");
+    sourceip.append(QString::number(ih->saddr.byte3));
+    sourceip.append(".");
+    sourceip.append(QString::number(ih->saddr.byte4));
+    entry->setText(2, sourceip);
+
+    entry->setText(3, QString::number(sport));
+
+
+/*
     output.append(" ");
     output.append(QString::number(ih->daddr.byte1));
     output.append(".");
@@ -174,10 +200,23 @@ void packet_handler(u_char *param, const struct pcap_pkthdr *header, const u_cha
     output.append(QString::number(ih->daddr.byte4));
     output.append(" ");
     output.append(QString::number(dport));
+*/
+    //current->ui->te_infooutput->appendPlainText(output);
 
-    current->ui->te_infooutput->appendPlainText(output);
+    QString destip;
+    destip.append(QString::number(ih->daddr.byte1));
+    destip.append(".");
+    destip.append(QString::number(ih->daddr.byte2));
+    destip.append(".");
+    destip.append(QString::number(ih->daddr.byte3));
+    destip.append(".");
+    destip.append(QString::number(ih->daddr.byte4));
+    entry->setText(4, destip);
+
+    entry->setText(5, QString::number(dport));
 
 
+    current->ui->treewdgt_output->addTopLevelItem(entry);
 
     //cout << timestr << " " << header->ts.tv_usec << " " << header->len << endl;
 }

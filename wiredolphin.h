@@ -4,7 +4,7 @@
 #include <QMainWindow>
 #include <QTimer>
 #include <pcap.h>
-
+#include <QTreeWidget>
 
 
 namespace Ui {
@@ -21,6 +21,7 @@ public:
     explicit wiredolphin(QWidget *parent = 0);
     ~wiredolphin();
     QTimer *timer;
+    //QTreeWidgetItem *output;
 
 
 private slots:
