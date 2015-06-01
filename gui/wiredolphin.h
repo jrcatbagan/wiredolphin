@@ -5,6 +5,7 @@
 #include <QTimer>
 #include <pcap.h>
 #include <QTreeWidget>
+#include <QScrollBar>
 
 
 namespace Ui {
@@ -22,6 +23,7 @@ public:
     ~wiredolphin();
     QTimer *timer;
     //QTreeWidgetItem *output;
+    QScrollBar *scrollbar;
 
 
 private slots:
@@ -29,6 +31,8 @@ private slots:
     void eventinitiated();
 
     void on_btn_stop_clicked();
+    void sliderpressedevent();
+
 
 private:
 

@@ -11,15 +11,15 @@ using namespace std;
 
 //-----------------
 /* 4 bytes IP address */
-typedef struct ip_address{
+typedef struct ip_address {
     u_char byte1;
     u_char byte2;
     u_char byte3;
     u_char byte4;
-}ip_address;
+} ip_address;
 
 /* IPv4 header */
-typedef struct ip_header{
+typedef struct ip_header {
     u_char  ver_ihl;        // Version (4 bits) + Internet header length (4 bits)
     u_char  tos;            // Type of service
     u_short tlen;           // Total length
@@ -31,18 +31,35 @@ typedef struct ip_header{
     ip_address  saddr;      // Source address
     ip_address  daddr;      // Destination address
     u_int   op_pad;         // Option + Padding
-}ip_header;
+} ip_header;
 
-/* UDP header*/
+/* UDP header */
 typedef struct udp_header{
     u_short sport;          // Source port
     u_short dport;          // Destination port
     u_short len;            // Datagram length
     u_short crc;            // Checksum
-}udp_header;
+} udp_header;
 
-char packet_filter[] = "ip and udp";
+/* TCP header */
+typedef struct tcp_header {
+    u_short sport;
+    u_short dport;
+    u_int seqnum;
+    u_int acknum;
+    u_short doff_resv_flags;
+    u_short windsz;
+    u_short crc;
+    u_short urg;
+} tcp_header;
+
+char packet_filter[] = "ip and (udp or tcp)";
 //-----------------
+
+void wiredolphin::sliderpressedevent()
+{
+    cout << "the slide bar is pressed" << endl;
+}
 
 wiredolphin::wiredolphin(QWidget *parent) :
     QMainWindow(parent),
@@ -50,11 +67,13 @@ wiredolphin::wiredolphin(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    ui->treewdgt_output->setColumnCount(6);
+    ui->treewdgt_output->setColumnCount(7);
     ui->treewdgt_output->setHeaderLabels(QStringList() << "Time" << "Length" << "Source IP" << "Source Port" <<
-                                         "Destination IP" << "Destination Port");
+                                         "Destination IP" << "Destination Port" << "Protocol");
 
 
+    //scrollbar = new QScrollBar(this->ui->treewdgt_output);
+    //QObject::connect(scrollbar, SIGNAL(sliderPressed()), this, SLOT(sliderpressedevent()));
 
     timer = new QTimer(this);
 
@@ -121,6 +140,7 @@ void packet_handler(u_char *param, const struct pcap_pkthdr *header, const u_cha
     time_t local_tv_sec;
     ip_header *ih;
     udp_header *uh;
+    tcp_header *th;
     u_int ip_len;
     u_short sport,dport;
 
@@ -145,80 +165,97 @@ void packet_handler(u_char *param, const struct pcap_pkthdr *header, const u_cha
     ih = (ip_header *) (pkt_data +
          14); //length of ethernet header
 
-    /* retireve the position of the udp header */
+    /* retireve the position of the udp/tcp header */
     ip_len = (ih->ver_ihl & 0xf) * 4;
-    uh = (udp_header *) ((u_char*)ih + ip_len);
 
-    /* convert from network byte order to host byte order */
-    sport = ntohs( uh->sport );
-    dport = ntohs( uh->dport );
 
     QTreeWidgetItem *entry = new QTreeWidgetItem(current->ui->treewdgt_output);
 
-    /*
-    QString output = QString(timestr);
-    output.append(" ");
-    output.append(QString::number(header->ts.tv_usec));
-    output.append(" ");
-    output.append(QString::number(header->len));*/
+    /* check the protocol number - TEST */
+    if (ih->proto == 17) {
+        cout << "the transport layer protocol is UDP" << endl;
 
-    entry->setText(0, QString(timestr));
-    entry->setText(1, QString::number(header->len));
-/*
-    output.append(" ");
-    output.append(QString::number(ih->saddr.byte1));
-    output.append(".");
-    output.append(QString::number(ih->saddr.byte2));
-    output.append(".");
-    output.append(QString::number(ih->saddr.byte3));
-    output.append(".");
-    output.append(QString::number(ih->saddr.byte4));
-    output.append(" ");
-    output.append(QString::number(sport));*/
+        uh = (udp_header *) ((u_char *)ih + ip_len);
 
-    QString sourceip;
-    sourceip.append(QString::number(ih->saddr.byte1));
-    sourceip.append(".");
-    sourceip.append(QString::number(ih->saddr.byte2));
-    sourceip.append(".");
-    sourceip.append(QString::number(ih->saddr.byte3));
-    sourceip.append(".");
-    sourceip.append(QString::number(ih->saddr.byte4));
-    entry->setText(2, sourceip);
+        /* convert from network byte order to host byte order */
+        sport = ntohs(uh->sport);
+        dport = ntohs(uh->dport);
 
-    entry->setText(3, QString::number(sport));
+        entry->setText(0, QString(timestr));
+        entry->setText(1, QString::number(header->len));
 
+        QString sourceip;
+        sourceip.append(QString::number(ih->saddr.byte1));
+        sourceip.append(".");
+        sourceip.append(QString::number(ih->saddr.byte2));
+        sourceip.append(".");
+        sourceip.append(QString::number(ih->saddr.byte3));
+        sourceip.append(".");
+        sourceip.append(QString::number(ih->saddr.byte4));
+        entry->setText(2, sourceip);
 
-/*
-    output.append(" ");
-    output.append(QString::number(ih->daddr.byte1));
-    output.append(".");
-    output.append(QString::number(ih->daddr.byte2));
-    output.append(".");
-    output.append(QString::number(ih->daddr.byte3));
-    output.append(".");
-    output.append(QString::number(ih->daddr.byte4));
-    output.append(" ");
-    output.append(QString::number(dport));
-*/
-    //current->ui->te_infooutput->appendPlainText(output);
+        entry->setText(3, QString::number(sport));
 
-    QString destip;
-    destip.append(QString::number(ih->daddr.byte1));
-    destip.append(".");
-    destip.append(QString::number(ih->daddr.byte2));
-    destip.append(".");
-    destip.append(QString::number(ih->daddr.byte3));
-    destip.append(".");
-    destip.append(QString::number(ih->daddr.byte4));
-    entry->setText(4, destip);
+        QString destip;
+        destip.append(QString::number(ih->daddr.byte1));
+        destip.append(".");
+        destip.append(QString::number(ih->daddr.byte2));
+        destip.append(".");
+        destip.append(QString::number(ih->daddr.byte3));
+        destip.append(".");
+        destip.append(QString::number(ih->daddr.byte4));
+        entry->setText(4, destip);
 
-    entry->setText(5, QString::number(dport));
+        entry->setText(5, QString::number(dport));
 
+        entry->setText(6, "UDP");
 
-    current->ui->treewdgt_output->addTopLevelItem(entry);
+        current->ui->treewdgt_output->addTopLevelItem(entry);
+        //current->ui->treewdgt_output->scrollToItem(entry);
+    }
+    else if (ih->proto == 6) {
+        cout << "the transport layer protocol is TCP" << endl;
 
-    //cout << timestr << " " << header->ts.tv_usec << " " << header->len << endl;
+        th = (tcp_header *) ((u_char *)ih + ip_len);
+
+        sport = ntohs(th->sport);
+        dport = ntohs(th->dport);
+
+        entry->setText(0, QString(timestr));
+        entry->setText(1, QString::number(header->len));
+
+        QString sourceip;
+        sourceip.append(QString::number(ih->saddr.byte1));
+        sourceip.append(".");
+        sourceip.append(QString::number(ih->saddr.byte2));
+        sourceip.append(".");
+        sourceip.append(QString::number(ih->saddr.byte3));
+        sourceip.append(".");
+        sourceip.append(QString::number(ih->saddr.byte4));
+        entry->setText(2, sourceip);
+
+        entry->setText(3, QString::number(sport));
+
+        QString destip;
+        destip.append(QString::number(ih->daddr.byte1));
+        destip.append(".");
+        destip.append(QString::number(ih->daddr.byte2));
+        destip.append(".");
+        destip.append(QString::number(ih->daddr.byte3));
+        destip.append(".");
+        destip.append(QString::number(ih->daddr.byte4));
+        entry->setText(4, destip);
+
+        entry->setText(5, QString::number(dport));
+
+        entry->setText(6, "TCP");
+
+        current->ui->treewdgt_output->addTopLevelItem(entry);
+    }
+    else {
+        cout << "the transport layer protocol is something else" << endl;
+    }
+
 }
 
 void wiredolphin::on_btn_capture_clicked()

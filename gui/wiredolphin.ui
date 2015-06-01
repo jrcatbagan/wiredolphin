@@ -65,10 +65,21 @@
     </property>
     <layout class="QVBoxLayout" name="verticalLayout_6">
      <item>
-      <widget class="QPlainTextEdit" name="te_infooutput">
-       <property name="readOnly">
-        <bool>true</bool>
+      <widget class="QTreeWidget" name="treewdgt_output">
+       <property name="verticalScrollBarPolicy">
+        <enum>Qt::ScrollBarAlwaysOn</enum>
        </property>
+       <property name="autoScroll">
+        <bool>false</bool>
+       </property>
+       <property name="columnCount">
+        <number>1</number>
+       </property>
+       <column>
+        <property name="text">
+         <string notr="true">1</string>
+        </property>
+       </column>
       </widget>
      </item>
     </layout>
@@ -84,12 +95,10 @@
     </property>
     <layout class="QVBoxLayout" name="verticalLayout_2">
      <item>
-      <widget class="QTreeWidget" name="treewdgt_output">
-       <column>
-        <property name="text">
-         <string notr="true">1</string>
-        </property>
-       </column>
+      <widget class="QPlainTextEdit" name="te_infooutput">
+       <property name="readOnly">
+        <bool>true</bool>
+       </property>
       </widget>
      </item>
     </layout>
