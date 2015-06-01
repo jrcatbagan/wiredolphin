@@ -6,36 +6,72 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
-    <height>300</height>
+    <width>933</width>
+    <height>548</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>wiredolphin</string>
   </property>
   <widget class="QWidget" name="centralWidget">
-   <widget class="QPushButton" name="btn_capture">
+   <widget class="QWidget" name="verticalLayoutWidget">
     <property name="geometry">
      <rect>
-      <x>210</x>
-      <y>80</y>
-      <width>93</width>
-      <height>28</height>
+      <x>10</x>
+      <y>0</y>
+      <width>911</width>
+      <height>171</height>
      </rect>
     </property>
-    <property name="text">
-     <string>Capture</string>
-    </property>
+    <layout class="QVBoxLayout" name="verticalLayout">
+     <item>
+      <widget class="QPlainTextEdit" name="te_interfacelist">
+       <property name="readOnly">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <layout class="QHBoxLayout" name="horizontalLayout_3">
+       <item>
+        <widget class="QLineEdit" name="le_interfacenumber"/>
+       </item>
+       <item>
+        <widget class="QPushButton" name="btn_capture">
+         <property name="text">
+          <string>Capture</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="btn_stop">
+         <property name="text">
+          <string>Stop</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+    </layout>
    </widget>
-   <widget class="QLineEdit" name="le_interfacenumber">
+   <widget class="QWidget" name="verticalLayoutWidget_2">
     <property name="geometry">
      <rect>
-      <x>90</x>
-      <y>80</y>
-      <width>113</width>
-      <height>22</height>
+      <x>10</x>
+      <y>310</y>
+      <width>911</width>
+      <height>181</height>
      </rect>
     </property>
+    <layout class="QVBoxLayout" name="verticalLayout_6">
+     <item>
+      <widget class="QPlainTextEdit" name="te_infooutput">
+       <property name="readOnly">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+    </layout>
    </widget>
   </widget>
   <widget class="QMenuBar" name="menuBar">
@@ -43,7 +79,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>400</width>
+     <width>933</width>
      <height>26</height>
     </rect>
    </property>

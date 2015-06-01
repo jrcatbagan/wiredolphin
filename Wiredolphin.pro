@@ -12,7 +12,7 @@ TARGET = Wiredolphin
 TEMPLATE = app
 
 INCLUDEPATH += $$_PRO_FILE_PWD_/WpdPack/Include
-LIBS += -L$$_PRO_FILE_PWD_/WpdPack/Lib -lwpcap -lpacket
+LIBS += -L$$_PRO_FILE_PWD_/WpdPack/Lib -lwpcap -lpacket -lws2_32
 DEFINES += WPCAP
 DEFINES += HAVE_REMOTE
 
