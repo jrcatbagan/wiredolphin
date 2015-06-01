@@ -53,7 +53,15 @@ typedef struct tcp_header {
     u_short urg;
 } tcp_header;
 
-char packet_filter[] = "ip and (udp or tcp)";
+/* ICMP header */
+typedef struct icmp_header {
+    u_char type;
+    u_char code;
+    u_short crc;
+    u_int rest;
+} icmp_header;
+
+char packet_filter[] = "ip and (udp or tcp or icmp)";
 //-----------------
 
 void wiredolphin::sliderpressedevent()
@@ -141,6 +149,7 @@ void packet_handler(u_char *param, const struct pcap_pkthdr *header, const u_cha
     ip_header *ih;
     udp_header *uh;
     tcp_header *th;
+    icmp_header *icmph;
     u_int ip_len;
     u_short sport,dport;
 
@@ -249,6 +258,38 @@ void packet_handler(u_char *param, const struct pcap_pkthdr *header, const u_cha
         entry->setText(5, QString::number(dport));
 
         entry->setText(6, "TCP");
+
+        current->ui->treewdgt_output->addTopLevelItem(entry);
+    }
+    else if (ih->proto == 1) {
+        cout << "the payload is ICMP" << endl;
+
+        icmph = (icmp_header *) ((u_char *)ih + ip_len);
+
+        entry->setText(0, QString(timestr));
+        entry->setText(1, QString::number(header->len));
+
+        QString sourceip;
+        sourceip.append(QString::number(ih->saddr.byte1));
+        sourceip.append(".");
+        sourceip.append(QString::number(ih->saddr.byte2));
+        sourceip.append(".");
+        sourceip.append(QString::number(ih->saddr.byte3));
+        sourceip.append(".");
+        sourceip.append(QString::number(ih->saddr.byte4));
+        entry->setText(2, sourceip);
+
+        QString destip;
+        destip.append(QString::number(ih->daddr.byte1));
+        destip.append(".");
+        destip.append(QString::number(ih->daddr.byte2));
+        destip.append(".");
+        destip.append(QString::number(ih->daddr.byte3));
+        destip.append(".");
+        destip.append(QString::number(ih->daddr.byte4));
+        entry->setText(4, destip);
+
+        entry->setText(6, "ICMP");
 
         current->ui->treewdgt_output->addTopLevelItem(entry);
     }
