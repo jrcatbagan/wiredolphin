@@ -34,6 +34,8 @@ private slots:
     void sliderpressedevent();
 
 
+    //void on_treewdgt_output_itemPressed(QTreeWidgetItem *item, int column);
+
 private:
 
     pcap_t *adhandle;

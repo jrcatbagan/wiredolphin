@@ -2,6 +2,7 @@
 #include "ui_wiredolphin.h"
 
 #include <iostream>
+#include <QMessageBox>
 
 #include <winsock2.h>
 #include <pcap.h>
@@ -219,6 +220,11 @@ void packet_handler(u_char *param, const struct pcap_pkthdr *header, const u_cha
 
         entry->setText(6, "UDP");
 
+
+
+        for (int i = 0;i < 7; i++)
+            entry->setBackgroundColor(i, Qt::green);
+
         current->ui->treewdgt_output->addTopLevelItem(entry);
         //current->ui->treewdgt_output->scrollToItem(entry);
     }
@@ -259,6 +265,9 @@ void packet_handler(u_char *param, const struct pcap_pkthdr *header, const u_cha
 
         entry->setText(6, "TCP");
 
+        for (int i = 0;i < 7; i++)
+            entry->setBackgroundColor(i, Qt::cyan);
+
         current->ui->treewdgt_output->addTopLevelItem(entry);
     }
     else if (ih->proto == 1) {
@@ -290,6 +299,10 @@ void packet_handler(u_char *param, const struct pcap_pkthdr *header, const u_cha
         entry->setText(4, destip);
 
         entry->setText(6, "ICMP");
+
+
+        for (int i = 0;i < 7; i++)
+            entry->setBackgroundColor(i, Qt::red);
 
         current->ui->treewdgt_output->addTopLevelItem(entry);
     }
@@ -332,6 +345,7 @@ void wiredolphin::on_btn_capture_clicked()
         QApplication::quit();
     }
 
+
     QString message = this->ui->le_interfacenumber->text();
     //unsigned int interfacenumber = message.toUInt();
 
@@ -340,82 +354,89 @@ void wiredolphin::on_btn_capture_clicked()
     //cout << "Enter the interface number (1-" << i << ")" << endl;
     //cin >> inum;
 
-    inum = message.toUInt();
-    cout << "the interface number is: " << inum << endl;
-
-    if(inum < 1 || inum > i)
-    {
-        cout << "Interface number out of range." << endl;
-        /* Free the device list */
-        pcap_freealldevs(alldevs);
-        QApplication::quit();
+    if (message.size() == 0) {
+        QMessageBox messagebox;
+        messagebox.setText("No Interface number was entered");
+        messagebox.exec();
     }
+    else {
+        inum = message.toUInt();
+        cout << "the interface number is: " << inum << endl;
 
-    /* Jump to the selected adapter */
-    cout << "jumping to the selected adapter" << endl;
-    for(d=alldevs, i=0; i< inum-1 ;d=d->next, i++);
+        if(inum < 1 || inum > i)
+        {
+            cout << "Interface number out of range." << endl;
+            /* Free the device list */
+            pcap_freealldevs(alldevs);
+            QApplication::quit();
+        }
 
-    /* Open the device */
-    cout << "opening the device" << endl;
-    if ( (adhandle= pcap_open(d->name,          // name of the device
-                              65536,            // portion of the packet to capture
-                                                // 65536 guarantees that the whole packet will be captured on all the link layers
-                              PCAP_OPENFLAG_PROMISCUOUS,    // promiscuous mode
-                              1000,             // read timeout
-                              NULL,             // authentication on the remote machine
-                              errbuf            // error buffer
-                              ) ) == NULL)
-    {
-        cout << endl << "Unable to open the adapter. " << d->name << "is not supported by WinPcap" << endl;
-        /* Free the device list */
+        /* Jump to the selected adapter */
+        cout << "jumping to the selected adapter" << endl;
+        for(d=alldevs, i=0; i< inum-1 ;d=d->next, i++);
+
+        /* Open the device */
+        cout << "opening the device" << endl;
+        if ( (adhandle= pcap_open(d->name,          // name of the device
+                                  65536,            // portion of the packet to capture
+                                                    // 65536 guarantees that the whole packet will be captured on all the link layers
+                                  PCAP_OPENFLAG_PROMISCUOUS,    // promiscuous mode
+                                  1000,             // read timeout
+                                  NULL,             // authentication on the remote machine
+                                  errbuf            // error buffer
+                                  ) ) == NULL)
+        {
+            cout << endl << "Unable to open the adapter. " << d->name << "is not supported by WinPcap" << endl;
+            /* Free the device list */
+            pcap_freealldevs(alldevs);
+            QApplication::quit();
+        }
+
+        /* Check the link layer. We support only Ethernet for simplicity. */
+        if(pcap_datalink(adhandle) != DLT_EN10MB)
+        {
+            cout << endl << "This program works only on Ethernet networks." << endl;
+            /* Free the device list */
+            pcap_freealldevs(alldevs);
+            QApplication::quit();
+        }
+
+        if(d->addresses != NULL)
+            /* Retrieve the mask of the first address of the interface */
+            netmask=((struct sockaddr_in *)(d->addresses->netmask))->sin_addr.S_un.S_addr;
+        else
+            /* If the interface is without addresses we suppose to be in a C class network */
+            netmask=0xffffff;
+
+        //compile the filter
+        if (pcap_compile(adhandle, &fcode, packet_filter, 1, netmask) <0 )
+        {
+            fprintf(stderr,"\nUnable to compile the packet filter. Check the syntax.\n");
+            /* Free the device list */
+            pcap_freealldevs(alldevs);
+            QApplication::quit();
+        }
+
+        //set the filter
+        if (pcap_setfilter(adhandle, &fcode)<0)
+        {
+            fprintf(stderr,"\nError setting the filter.\n");
+            /* Free the device list */
+            pcap_freealldevs(alldevs);
+            QApplication::quit();
+        }
+
+
+        cout << endl << "listening" << " " << d->description << "..." << endl;
+
+        /* At this point, we don't need any more the device list. Free it */
         pcap_freealldevs(alldevs);
-        QApplication::quit();
+
+        /* start the capture */
+
+        timer->start(500);
+        //pcap_loop(adhandle, 1, packet_handler, (uchar *)this);
     }
-
-    /* Check the link layer. We support only Ethernet for simplicity. */
-    if(pcap_datalink(adhandle) != DLT_EN10MB)
-    {
-        cout << endl << "This program works only on Ethernet networks." << endl;
-        /* Free the device list */
-        pcap_freealldevs(alldevs);
-        QApplication::quit();
-    }
-
-    if(d->addresses != NULL)
-        /* Retrieve the mask of the first address of the interface */
-        netmask=((struct sockaddr_in *)(d->addresses->netmask))->sin_addr.S_un.S_addr;
-    else
-        /* If the interface is without addresses we suppose to be in a C class network */
-        netmask=0xffffff;
-
-    //compile the filter
-    if (pcap_compile(adhandle, &fcode, packet_filter, 1, netmask) <0 )
-    {
-        fprintf(stderr,"\nUnable to compile the packet filter. Check the syntax.\n");
-        /* Free the device list */
-        pcap_freealldevs(alldevs);
-        QApplication::quit();
-    }
-
-    //set the filter
-    if (pcap_setfilter(adhandle, &fcode)<0)
-    {
-        fprintf(stderr,"\nError setting the filter.\n");
-        /* Free the device list */
-        pcap_freealldevs(alldevs);
-        QApplication::quit();
-    }
-
-
-    cout << endl << "listening" << " " << d->description << "..." << endl;
-
-    /* At this point, we don't need any more the device list. Free it */
-    pcap_freealldevs(alldevs);
-
-    /* start the capture */
-
-    timer->start(1000);
-    //pcap_loop(adhandle, 1, packet_handler, (uchar *)this);
 
 }
 
@@ -423,3 +444,11 @@ void wiredolphin::on_btn_stop_clicked()
 {
     timer->stop();
 }
+/*
+void wiredolphin::on_treewdgt_output_itemPressed(QTreeWidgetItem *item, int column)
+{
+    string message = item->text(column).toLatin1();
+    cout << "an item was pressed with column " << column << endl;
+    cout << "\twith text " << message << endl;
+    cout << "\twith index " << curre
+}*/

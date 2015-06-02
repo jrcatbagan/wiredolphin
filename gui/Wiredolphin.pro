@@ -22,3 +22,5 @@ SOURCES += main.cpp\
 HEADERS  += wiredolphin.h
 
 FORMS    += wiredolphin.ui
+
+message($$_PRO_FILE_PWD_)
